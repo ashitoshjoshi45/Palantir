@@ -1,0 +1,146 @@
+================================================================================
+AEGIS // 6-MONTH THREAT ONTOLOGY & AI SOC PLATFORM ENGINEERING ROADMAP
+================================================================================
+
+MONTH 1: LOCAL ONTOLOGY CORE & BACKEND REST API FOUNDATION
+--------------------------------------------------------------------------------
+Goal: Transition Day 01 SQLite schema into a functional FastAPI backend and wire
+      up the initial static UI components.
+
+- Week 01: Database Models & Graph Schema Expansion
+  * Build Pydantic and SQLAlchemy ORM models for ontology_objects & ontology_links.
+  * Add attributes: object_type, risk_score, containment_status, mitre_technique_id.
+  * Populate SQLite seed fixtures for APT-29 and Crypto Miner campaigns.
+
+- Week 02: FastAPI Core REST Engine
+  * Setup FastAPI application with CORS middleware enabled for local frontend.
+  * Implement GET /api/v1/ontology/graph (returns nodes and edges JSON).
+  * Implement GET /api/v1/ontology/entities/{id} (returns deep evidence array).
+
+- Week 03: Frontend REST API Integration (Graph & Inspector)
+  * In aegis_ontology_soc.html, replace static initialNodes/initialEdges with
+    asynchronous fetch('/api/v1/ontology/graph').
+  * Bind click handlers to fetch('/api/v1/ontology/entities/' + nodeId) and
+    dynamically render the right-hand Entity Inspector.
+
+- Week 04: Campaign & Layer Filtering API
+  * Implement query parameters: GET /api/v1/ontology/graph?campaign=c2&types=threat,compute.
+  * Wire UI checkboxes and campaign buttons to trigger filtered refetches.
+
+
+MONTH 2: REAL-TIME TELEMETRY STREAM & CLICKHOUSE SIEM INTEGRATION
+--------------------------------------------------------------------------------
+Goal: Power the bottom telemetry drawer and ClickHouse SIEM table with live,
+      queryable log streams.
+
+- Week 05: Log Ingestion & Dockerized ClickHouse Setup
+  * Spin up local ClickHouse and Redpanda (lightweight Kafka) via Docker Compose.
+  * Create aegis_telemetry table with MergeTree engine optimized for time-series.
+  * Write a Python event generator emitting synthetic AWS GuardDuty & Wazuh logs.
+
+- Week 06: High-Speed OLAP Query Endpoints
+  * Build GET /api/v1/siem/logs with filtering parameters (severity, source, query).
+  * Build GET /api/v1/siem/stats returning live EPS count and p99 query latency.
+
+- Week 07: Real-Time WebSocket Telemetry Engine
+  * Build WebSocket endpoint: WS /ws/telemetry/live.
+  * Stream Kafka events directly to connected browser clients as JSON frames.
+
+- Week 08: Frontend SIEM & Stream Integration
+  * Replace static initialLogs in frontend with WebSocket client.
+  * Dynamically prepend new events to the live stream drawer in real time.
+  * Connect the search bar and dropdowns in View 03 to GET /api/v1/siem/logs.
+
+
+MONTH 3: MITRE ATT&CK MATRIX & MULTI-SENSOR CORRELATION
+--------------------------------------------------------------------------------
+Goal: Correlate incoming telemetry across endpoints (Wazuh), network (Suricata),
+      and cloud (AWS GuardDuty) to the MITRE ATT&CK framework.
+
+- Week 09: STIX 2.1 & MITRE Enterprise Taxonomy Engine
+  * Create STIX 2.1 normalization layer mapping raw logs into standard schema.
+  * Map techniques: T1078.004 (Cloud Accounts), T1059 (Bash), T1530 (S3 Exfil).
+
+- Week 10: Multi-Sensor Correlation Rules
+  * Write correlation workers matching endpoint process trees to network alerts.
+  * Compute dynamic entity risk scores based on active correlated kill chains.
+
+- Week 11: MITRE Matrix REST API
+  * Build GET /api/v1/mitre/matrix returning tactics, techniques, and active alerts.
+  * Build GET /api/v1/mitre/techniques/{id} returning detection queries and rules.
+
+- Week 12: Frontend MITRE View Binding
+  * Connect View 02 in HTML to dynamically render columns from the MITRE API.
+  * Wire the "INSPECT NODE IN ONTOLOGY" button to automatically switch views
+    and select the correlated node in the graph.
+
+
+MONTH 4: GRAPH DB SCALING & ATTACK PATH TRAVERSAL
+--------------------------------------------------------------------------------
+Goal: Migrate from SQLite to Neo4j (or Amazon Neptune) for multi-hop graph
+      queries and automated breach blast-radius calculations.
+
+- Week 13: Neo4j Integration & Data Migration
+  * Run Neo4j Community in Docker Compose; implement Cypher query drivers.
+  * Ingest nodes and relationships using Cypher MERGE statements.
+
+- Week 14: Attack-Path Traversal Algorithms
+  * Implement shortest-path and blast-radius graph traversal algorithms:
+    MATCH path = shortestPath((c2:ThreatActor)-[*]->(target:DataAsset)).
+  * Build GET /api/v1/ontology/paths/critical-path endpoint.
+
+- Week 15: Frontend Attack-Path Highlighting Integration
+  * Connect UI button "HIGHLIGHT ATTACK PATH" to the critical-path endpoint.
+  * Dynamically apply the .attack-edge-active SVG animation class to returned edge IDs.
+
+- Week 16: Interactive Cyber Range Simulation Engine
+  * Build POST /api/v1/simulation/breach-wave to trigger multi-stage kill chains.
+  * Wire UI button "SIMULATE BREACH" to inject automated attack pulses.
+
+
+MONTH 5: AWS SERVERLESS SOAR & AUTOMATED CONTAINMENT
+--------------------------------------------------------------------------------
+Goal: Transform the SOC dashboard from a monitoring tool into an active defense
+      platform using human-in-the-loop AWS Lambda containment playbooks.
+
+- Week 17: AWS Boto3 Containment Scripts
+  * Write Lambda functions for:
+    1. EC2 Isolation: Swap network interfaces to a zero-trust Deny-All Security Group.
+    2. IAM Revocation: Attach inline DenyAll policy and invalidate active STS sessions.
+    3. WAF Block: Push malicious IP to AWS WAFv2 IPSet and Suricata blocklist.
+
+- Week 18: SOAR Action API & Audit Trail
+  * Build POST /api/v1/soar/contain endpoint accepting target entity and playbook ID.
+  * Create immutable SQLite/Postgres soar_audit_log table recording action timestamps,
+    operator ID, and AWS API response tokens.
+  * Build GET /api/v1/soar/audit-log endpoint.
+
+- Week 19: Frontend SOAR Playbook Integration
+  * Wire UI buttons (Isolate Node, Revoke Tokens, Push WAF) to POST /api/v1/soar/contain.
+  * Automatically update node visual status to 'ISOLATED' (emerald green border).
+  * Prepend returned confirmation to the "IMMUTABLE SOAR AUDIT LOG" container.
+
+- Week 20: Bulk Containment Playbook
+  * Build POST /api/v1/soar/contain-all endpoint.
+  * Wire the "AUTO-CONTAIN ALL" UI button to quarantine all compromised nodes in one click.
+
+
+MONTH 6: AIP COPILOT (GRAPH-RAG), DEPLOYMENT & INTERVIEW PACKAGING
+--------------------------------------------------------------------------------
+Goal: Add an AI Security Operations Copilot powered by LLM Graph-RAG, deploy
+      on AWS Free Tier, and document the project for portfolio presentation.
+
+- Week 21: Graph-RAG Pipeline (Amazon Bedrock / Claude / OpenAI)
+  * Build context extractor querying Neo4j for the active kill chain subgraph.
+  * Construct prompt pipeline synthesizing root-cause and blast-radius analyses.
+
+- Week 22: AIP Copilot API & Modal Integration
+  * Build POST /api/v1/copilot/query accepting analyst queries.
+  * Connect the Cmd+K modal in the frontend to stream Copilot answers back to the UI.
+  * Wire the 3 preset tactical prompt buttons directly to specialized API routes.
+
+- Week 23: Production Containerization & Cloud Deployment
+  * Write multi-stage Dockerfile and docker-compose.prod.yml.
+  * Deploy frontend to AWS Amplify or CloudFront/S3 (Free Tier).
+  * Deploy backend container to AWS EC2 t3.micro or AWS App Runner.
+
